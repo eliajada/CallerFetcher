@@ -25,6 +25,19 @@ public interface Elements {
 	public static final String td_caller_3_location = "(//*[contains(text(),'Locations')]//span)[3]";
 
 
+	// FastPeopleSearch
+	
+	
+	public static final String fps_phoneNumber_text = "//*[@type='tel']";
+	
+	public static final String fps_submit_button = "//*[@type='submit']";
+	
+	public static final String fps_caller = "//*[@class='card-title']//*[@class='larger']";
+	
+	public static final String fps_caller_location = "//*[@class='card-title']//*[@class='grey']";
+
+	
+	
 	
 	
 	

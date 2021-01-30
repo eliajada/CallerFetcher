@@ -107,7 +107,7 @@ public abstract class Selenium {
 
 	}
 
-	public static void endSession(String website) {
+	public static void endSession() {
 
 		driver.quit();
 
