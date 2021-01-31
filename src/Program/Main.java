@@ -1,8 +1,13 @@
 package Program;
 
+import java.awt.Cursor;
+import java.awt.Desktop;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -21,13 +26,16 @@ import javax.swing.table.DefaultTableModel;
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
 import com.itextpdf.kernel.pdf.PdfDocument;
+import com.itextpdf.text.Element;
 import com.itextpdf.layout.element.Cell;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.property.HorizontalAlignment;
 import com.itextpdf.layout.property.TextAlignment;
 import com.itextpdf.layout.property.UnitValue;
 import com.itextpdf.layout.Document;
 import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Element;
 import com.itextpdf.kernel.pdf.PdfWriter;
 import com.itextpdf.io.font.constants.StandardFonts;
 
@@ -37,7 +45,9 @@ public class Main extends Selenium implements Elements {
 	// add carrier detector
 	//
 
+	// 8007597243
 	// 8042221111
+
 	static String phoneNumber;
 
 	static DefaultTableModel model;
@@ -51,8 +61,8 @@ public class Main extends Selenium implements Elements {
 		String dest = "Results\\NumberResults.pdf";
 
 		PdfDocument pdf = new PdfDocument(new PdfWriter(dest));
-		regular = PdfFontFactory.createFont(StandardFonts.COURIER);
-		bold = PdfFontFactory.createFont(StandardFonts.COURIER_BOLD);
+		regular = PdfFontFactory.createFont(StandardFonts.HELVETICA);
+		bold = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
 		document = new Document(pdf);
 
 		JFrame frame = new JFrame("Caller Fetcher");
@@ -65,6 +75,7 @@ public class Main extends Selenium implements Elements {
 		label.setLabelFor(numberInput);
 
 		model = new DefaultTableModel();
+		model.addColumn("<html><font size=\"4\"><b>Lookup Source:</b></font></html>");
 		model.addColumn("<html><font size=\"4\"><b>Caller:</b></font></html>");
 		model.addColumn("<html><font size=\"4\"><b>Location:</b></font></html>");
 
@@ -72,17 +83,9 @@ public class Main extends Selenium implements Elements {
 		searchButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 
-
 				phoneNumber = numberInput.getText();
 
 				Selenium.startIncognitoSession();
-
-				try {
-					telephoneDirectories(phoneNumber);
-				} catch (InterruptedException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
 
 				try {
 					fastPeopleSearch(phoneNumber);
@@ -91,15 +94,34 @@ public class Main extends Selenium implements Elements {
 
 				}
 
-				JTable jtable = new JTable(model);
+				/**
+				 * JTable jtable = new JTable(model);
+				 * 
+				 * jtable.setBounds(30, 40, 200, 300); JScrollPane sp = new JScrollPane(jtable);
+				 * 
+				 * label.setVisible(false); numberInput.setVisible(false);
+				 * searchButton.setVisible(false); frame.add(sp);
+				 **/
 
-				jtable.setBounds(30, 40, 200, 300);
-				JScrollPane sp = new JScrollPane(jtable);
+				/**
+				 * JLabel linkToResultsLabel = new JLabel("Click here to view a <b>PDF</b> of
+				 * the search results"); JScrollPane linkToResultsPanel = new
+				 * JScrollPane(linkToResultsLabel);
+				 * linkToResultsLabel.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+				 * linkToResultsLabel.addMouseListener(new MouseAdapter() {
+				 * 
+				 * @Override public void mouseClicked(MouseEvent e) { try {
+				 *           Desktop.getDesktop().open( new File("Results\\NumberResults.pdf"));
+				 *           } catch (IOException e1) {
+				 * 
+				 *           e1.printStackTrace(); } } }); frame.add(linkToResultsPanel);
+				 **/
 
-				label.setVisible(false);
-				numberInput.setVisible(false);
-				searchButton.setVisible(false);
-				frame.add(sp);
+				try {
+					Desktop.getDesktop().open(new File("Results\\NumberResults.pdf"));
+				} catch (IOException e1) {
+					e1.printStackTrace();
+				}
 
 				frame.pack();
 				frame.setVisible(true);
@@ -120,74 +142,32 @@ public class Main extends Selenium implements Elements {
 
 	}
 
-	public static void telephoneDirectories(String number) throws InterruptedException {
-
-		// process number method for telephoneDirectories format
+	public static void resultsToPDF(String source, String caller, String location) throws InterruptedException {
 
 		try {
 
-			TelephoneDirectories td = new TelephoneDirectories();
-
-			Selenium.goTo("https://www.telephonedirectories.us/");
-
-			Selenium.click(td_search_button);
-
-			Selenium.sendKeys(td_phoneNumber_text, number);
-
-			Selenium.click(td_submit_button);
-
-			Thread.sleep(3000);
-
-			String Caller1 = Selenium.getText(td_caller_1);
-			String Caller1Location = Selenium.getText(td_caller_1_location);
-			String Caller2 = Selenium.getText(td_caller_2);
-			String Caller2Location = Selenium.getText(td_caller_2_location);
-			String Caller3 = Selenium.getText(td_caller_3);
-			String Caller3Location = Selenium.getText(td_caller_3_location);
-
-			td.setCaller1(Caller1);
-			td.setCaller1Location(Caller1Location);
-			td.setCaller2(Caller2);
-			td.setCaller2Location(Caller2Location);
-			td.setCaller3(Caller3);
-			td.setCaller3Location(Caller3Location);
-
-			// JTable ********************************************
-
-			// String htmlTest = "<html><font size=\"3\">"+td.getCaller1()+"</font></html>";
-			// model.addRow(new Object[] {htmlTest,td.getCaller1Location()});
-			model.addRow(new Object[] { td.getCaller1(), td.getCaller1Location() });
-
-			// pdf ********************************************
+			Paragraph lookupSource = new Paragraph(source);
+			lookupSource.setTextAlignment(TextAlignment.CENTER);
+			document.add(lookupSource);
 
 			Table table = new Table(UnitValue.createPercentArray(2));
 			table.setWidth(UnitValue.createPercentValue(70)).setMarginBottom(10);
+			table.setHorizontalAlignment(HorizontalAlignment.CENTER);
 
 			table.addHeaderCell(
 					new Cell().setFont(bold).add(new Paragraph("Caller:").setTextAlignment(TextAlignment.CENTER)));
 			table.addHeaderCell(
 					new Cell().setFont(bold).add(new Paragraph("Location:").setTextAlignment(TextAlignment.CENTER)));
 
-			table.addCell(new Cell().setFont(regular)
-					.add(new Paragraph(td.getCaller1()).setTextAlignment(TextAlignment.CENTER)));
-			table.addCell(new Cell().setFont(regular)
-					.add(new Paragraph(td.getCaller1Location()).setTextAlignment(TextAlignment.CENTER)));
-
-//		table.addCell(new Cell().setFont(bold).add(new Paragraph("Caller 2:")));
-//		table.addCell(new Cell().setFont(regular).add(new Paragraph(td.getCaller2())));
-//		table.addCell(new Cell().setFont(bold).add(new Paragraph("Caller 2 Location:")));
-//		table.addCell(new Cell().setFont(regular).add(new Paragraph(td.getCaller2Location())));
-//
-//		table.addCell(new Cell().setFont(bold).add(new Paragraph("Caller 3:")));
-//		table.addCell(new Cell().setFont(regular).add(new Paragraph(td.getCaller3())));
-//		table.addCell(new Cell().setFont(bold).add(new Paragraph("Caller 3 Location:")));
-//		table.addCell(new Cell().setFont(regular).add(new Paragraph(td.getCaller3Location())));
+			table.addCell(
+					new Cell().setFont(regular).add(new Paragraph(caller).setTextAlignment(TextAlignment.CENTER)));
+			table.addCell(
+					new Cell().setFont(regular).add(new Paragraph(location).setTextAlignment(TextAlignment.CENTER)));
 
 			document.add(table);
 
-		} catch (InterruptedException e) {
-			// TODO Auto-generated catch block
-			System.out.println("telephoneDirectories Failed");
+		} catch (Exception e) {
+			System.out.println("resultsToPDF Failed");
 
 		}
 
@@ -195,43 +175,33 @@ public class Main extends Selenium implements Elements {
 
 	public static void fastPeopleSearch(String number) throws InterruptedException {
 
+		String source = "Fast People Search";
+		String sourceLink = "https://www.fastpeoplesearch.com/";
+		String callerPath = fps_caller;
+		String callerLocationPath = fps_caller_location;
+
+		Data data = new Data();
 		try {
 
-			FastPeopleSearch fps = new FastPeopleSearch();
+			Selenium.goTo(sourceLink + number);
 
-			Selenium.goTo("https://www.fastpeoplesearch.com/reverse-phone-lookup");
+			if (Selenium.isDisplayed(callerPath)) {
+				data.setCaller(Selenium.getText(callerPath));
+			} else {
+				System.out.println(source +": Could not locate Caller Path");
+			}
 
-			Selenium.sendKeys(fps_phoneNumber_text, number);
+			if (Selenium.isDisplayed(callerLocationPath)) {
+				data.setCallerLocation(Selenium.getText(callerLocationPath));
+			} else {
+				
+				System.out.println(source +": Could not locate Caller Location Path");
+			}
 
-			Selenium.click(fps_submit_button);
+			resultsToPDF(source, data.getCaller(), data.getCallerLocation());
 
-			fps.setCaller1(Selenium.getText(fps_caller));
-			fps.setCaller1Location(Selenium.getText(fps_caller_location));
-
-			// JTable ********************************************
-
-			model.addRow(new Object[] { fps.getCaller1(), fps.getCaller1Location() });
-
-			// pdf ********************************************
-
-			Table table = new Table(UnitValue.createPercentArray(2));
-			table.setWidth(UnitValue.createPercentValue(70)).setMarginBottom(10);
-
-			table.addHeaderCell(new Cell().setFont(bold)
-					.add(new Paragraph("Lookup Source 2:").setTextAlignment(TextAlignment.CENTER)));
-			table.addHeaderCell(
-					new Cell().setFont(bold).add(new Paragraph("Information").setTextAlignment(TextAlignment.CENTER)));
-
-			table.addCell(new Cell().setFont(bold).add(new Paragraph("Caller:")));
-			table.addCell(new Cell().setFont(regular).add(new Paragraph(fps.getCaller1())));
-			table.addCell(new Cell().setFont(bold).add(new Paragraph("Caller Location:")));
-			table.addCell(new Cell().setFont(regular).add(new Paragraph(fps.getCaller1Location())));
-
-			document.add(table);
-
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			System.out.println("fastPeopleSearch Failed");
+		} catch (InterruptedException e) {
+			System.out.println(source + " Failed");
 
 		}
 
