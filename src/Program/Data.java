@@ -10,6 +10,9 @@ public class Data {
     protected String caller2location;
     protected String caller3;
     protected String caller3location;
+    
+    protected String shouldIAnswerRate;
+    
 
 
     public String getCaller() {
@@ -65,6 +68,15 @@ public class Data {
 
     public void setCaller3Location(String caller3location) {
         this.caller3location = caller3location;
+    }
+    
+    
+    public String getShouldIAnswerRating() {
+        return shouldIAnswerRate;
+    }
+
+    public void setShouldIAnswerRating(String shouldIAnswerRate) {
+        this.shouldIAnswerRate = shouldIAnswerRate;
     }
     
 

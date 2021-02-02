@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.util.Arrays;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -23,20 +24,27 @@ import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.table.DefaultTableModel;
 
+import com.itextpdf.kernel.colors.Color;
+import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.font.PdfFont;
 import com.itextpdf.kernel.font.PdfFontFactory;
+import com.itextpdf.kernel.geom.Rectangle;
 import com.itextpdf.kernel.pdf.PdfDocument;
 import com.itextpdf.text.Element;
 import com.itextpdf.layout.element.Cell;
+import com.itextpdf.layout.element.Image;
 import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
+import com.itextpdf.layout.element.Text;
 import com.itextpdf.layout.property.HorizontalAlignment;
 import com.itextpdf.layout.property.TextAlignment;
 import com.itextpdf.layout.property.UnitValue;
+import com.itextpdf.layout.Canvas;
 import com.itextpdf.layout.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Element;
 import com.itextpdf.kernel.pdf.PdfWriter;
+import com.itextpdf.kernel.pdf.xobject.PdfFormXObject;
 import com.itextpdf.io.font.constants.StandardFonts;
 
 public class Main extends Selenium implements Elements {
@@ -47,23 +55,32 @@ public class Main extends Selenium implements Elements {
 
 	// 8007597243
 	// 8042221111
+	// 804-222-1111
 
 	static String phoneNumber;
 
 	static DefaultTableModel model;
 
+	static PdfDocument pdf;
 	static Document document;
 	static PdfFont regular;
 	static PdfFont bold;
+
+	static PdfFormXObject template;
+	static Canvas templateCanvas;
 
 	public static void main(String[] args) throws DocumentException, IOException {
 
 		String dest = "Results\\NumberResults.pdf";
 
-		PdfDocument pdf = new PdfDocument(new PdfWriter(dest));
+		pdf = new PdfDocument(new PdfWriter(dest));
 		regular = PdfFontFactory.createFont(StandardFonts.HELVETICA);
 		bold = PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD);
 		document = new Document(pdf);
+		// topOfPage
+		template = new PdfFormXObject(new Rectangle(0, 0, 523, 50));
+		templateCanvas = new Canvas(template, pdf);
+		document.add(new Image(template));
 
 		JFrame frame = new JFrame("Caller Fetcher");
 		frame.setSize(400, 100);
@@ -86,6 +103,13 @@ public class Main extends Selenium implements Elements {
 				phoneNumber = numberInput.getText();
 
 				Selenium.startIncognitoSession();
+
+				try {
+					shouldIAnswer(phoneNumber);
+				} catch (InterruptedException e2) {
+					// TODO Auto-generated catch block
+
+				}
 
 				try {
 					fastPeopleSearch(phoneNumber);
@@ -126,6 +150,7 @@ public class Main extends Selenium implements Elements {
 				frame.pack();
 				frame.setVisible(true);
 
+				templateCanvas.close();
 				document.close();
 				Selenium.endSession();
 
@@ -139,6 +164,33 @@ public class Main extends Selenium implements Elements {
 		frame.pack();
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);
+
+	}
+
+	public static void topOfPage() throws InterruptedException {
+
+		try {
+
+			Table topTable = new Table(UnitValue.createPercentArray(2));
+			topTable.setWidth(UnitValue.createPercentValue(70)).setMarginBottom(10);
+			topTable.setHorizontalAlignment(HorizontalAlignment.CENTER);
+
+			topTable.addHeaderCell(
+					new Cell().setFont(bold).add(new Paragraph("Carrier:").setTextAlignment(TextAlignment.CENTER)));
+			topTable.addCell(new Cell().setFont(regular)
+					.add(new Paragraph("AT&TMobizon").setTextAlignment(TextAlignment.CENTER)));
+
+			topTable.addHeaderCell(
+					new Cell().setFont(bold).add(new Paragraph("Area Code: ").setTextAlignment(TextAlignment.CENTER)));
+			topTable.addCell(new Cell().setFont(regular)
+					.add(new Paragraph("Dummystate").setTextAlignment(TextAlignment.CENTER)));
+
+			templateCanvas.add(topTable);
+
+		} catch (Exception e) {
+			System.out.println("topOfPage Failed");
+
+		}
 
 	}
 
@@ -173,6 +225,93 @@ public class Main extends Selenium implements Elements {
 
 	}
 
+	public static String numberProcessor(String number, String source) throws InterruptedException {
+
+		char[] phoneArray_Initial = new char[number.length()];
+		String phoneNumber = "";
+
+		for (int i = 0; i < number.length(); i++) {
+			phoneArray_Initial[i] = number.charAt(i);
+		}
+
+		if (phoneArray_Initial[0] == '+' && phoneArray_Initial[1] == '1') {
+			phoneArray_Initial = Arrays.copyOfRange(phoneArray_Initial, 2, number.length());
+			System.out.println("phoneArray_Initial: " + new String(phoneArray_Initial));
+		}
+
+		String phoneArray_String = new String(phoneArray_Initial);
+
+		if (source.trim().equals("Fast People Search") && !phoneArray_String.contains("-")) {
+
+			StringBuilder sb = new StringBuilder(phoneArray_String);
+			sb.insert(3, '-');
+			sb.insert(7, '-');
+
+			phoneNumber = sb.toString();
+
+			System.out.println("phoneNumber" + sb.toString());
+
+		} else {
+
+			phoneNumber = phoneArray_String;
+
+		}
+
+		return phoneNumber;
+
+	}
+
+	public static void shouldIAnswer(String number) throws InterruptedException {
+
+		String source = "Should I Answer?";
+		String sourceLink = "https://www.shouldianswer.com/phone-number/";
+		String shouldIAnswerRatingPath = sia_result;
+
+		String reNumber = numberProcessor(number, source);
+		Data data = new Data();
+		try {
+
+			Selenium.goTo(sourceLink + reNumber);
+
+			if (Selenium.isDisplayed(shouldIAnswerRatingPath)) {
+
+				String rating = Selenium.getText(shouldIAnswerRatingPath);
+				data.setShouldIAnswerRating(rating);
+				System.out.println("Rating:" + Selenium.getText(shouldIAnswerRatingPath));
+
+			} else {
+				System.out.println(source + ": Could not locate Should I Answer? Rating");
+			}
+
+			Text coloredText = null;
+
+			if (data.getShouldIAnswerRating().toLowerCase().trim().contains("positive")) {
+				coloredText = new Text(data.getShouldIAnswerRating()).setFontColor(ColorConstants.GREEN)
+						.setFont(PdfFontFactory.createFont(StandardFonts.HELVETICA));
+			} else if (data.getShouldIAnswerRating().toLowerCase().trim().contains("negative")) {
+				coloredText = new Text(data.getShouldIAnswerRating()).setFontColor(ColorConstants.RED)
+						.setFont(PdfFontFactory.createFont(StandardFonts.HELVETICA));
+			}
+
+			Table ratingTable = new Table(UnitValue.createPercentArray(2));
+			ratingTable.setWidth(UnitValue.createPercentValue(70)).setMarginBottom(10);
+			ratingTable.setHorizontalAlignment(HorizontalAlignment.CENTER);
+
+			ratingTable.addHeaderCell(new Cell().add(new Paragraph("Should I Answer? Rating:")
+					.setFont(PdfFontFactory.createFont(StandardFonts.HELVETICA_BOLD))
+					.setTextAlignment(TextAlignment.CENTER)));
+			ratingTable
+					.addHeaderCell(new Cell().add(new Paragraph(coloredText).setTextAlignment(TextAlignment.CENTER)));
+
+			templateCanvas.add(ratingTable);
+
+		} catch (Exception e) {
+			System.out.println(source + " Failed");
+
+		}
+
+	}
+
 	public static void fastPeopleSearch(String number) throws InterruptedException {
 
 		String source = "Fast People Search";
@@ -180,22 +319,23 @@ public class Main extends Selenium implements Elements {
 		String callerPath = fps_caller;
 		String callerLocationPath = fps_caller_location;
 
+		String reNumber = numberProcessor(number, source);
 		Data data = new Data();
 		try {
 
-			Selenium.goTo(sourceLink + number);
+			Selenium.goTo(sourceLink + reNumber);
 
 			if (Selenium.isDisplayed(callerPath)) {
 				data.setCaller(Selenium.getText(callerPath));
 			} else {
-				System.out.println(source +": Could not locate Caller Path");
+				System.out.println(source + ": Could not locate Caller Path");
 			}
 
 			if (Selenium.isDisplayed(callerLocationPath)) {
 				data.setCallerLocation(Selenium.getText(callerLocationPath));
 			} else {
-				
-				System.out.println(source +": Could not locate Caller Location Path");
+
+				System.out.println(source + ": Could not locate Caller Location Path");
 			}
 
 			resultsToPDF(source, data.getCaller(), data.getCallerLocation());
